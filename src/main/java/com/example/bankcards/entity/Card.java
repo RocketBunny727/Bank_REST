@@ -1,13 +1,12 @@
 package com.example.bankcards.entity;
 
-import com.example.bankcards.exception.MissingCardNumberException;
-import com.example.bankcards.exception.MissingExpiryDateException;
+import com.example.bankcards.util.ExpireDateConverter;
+import com.example.bankcards.util.NumberMasker;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnTransformer;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 @Entity
 @Table(name = "cards")
@@ -30,10 +29,7 @@ public class Card {
     private String number;
 
     public String getMaskedNumber() {
-        if (number == null) {
-            throw new MissingCardNumberException("Missing card number");
-        }
-        return "**** **** ****" + number.substring(number.length() - 4);
+        return NumberMasker.mask(number);
     }
 
     @Column(nullable = false)
@@ -47,13 +43,10 @@ public class Card {
     private double balance;
 
     @Column(nullable = false)
-    private LocalDate expiryDate;
+    private LocalDate expireDate;
 
     public String getFormattedExpiryDate() {
-        if (expiryDate == null) {
-            throw new MissingExpiryDateException("Missing expiry date");
-        }
-        return expiryDate.format(DateTimeFormatter.ofPattern("MM/yy"));
+        return ExpireDateConverter.convertDateToString(this.expireDate);
     }
 
     public void blockCard() {
@@ -65,7 +58,7 @@ public class Card {
     }
 
     public boolean updateExpireStatus() {
-        if (this.expiryDate != null && this.expiryDate.isBefore(LocalDate.now())) {
+        if (this.expireDate != null && this.expireDate.isBefore(LocalDate.now())) {
             this.status = CardStatus.EXPIRED;
             return true;
         }

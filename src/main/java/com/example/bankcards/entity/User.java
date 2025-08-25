@@ -28,6 +28,5 @@ public class User {
     private Role role;
 
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
-    @Builder.Default
     List<Card> cards;
 }
