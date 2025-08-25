@@ -1,8 +1,10 @@
 package com.example.bankcards.entity;
 
+import com.example.bankcards.exception.MissingCardNumberException;
 import com.example.bankcards.exception.MissingExpiryDateException;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnTransformer;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -21,9 +23,16 @@ public class Card {
     private long id;
 
     @Column(nullable = false)
+    @ColumnTransformer(
+            read = "pgp_sym_decrypt(number, current_setting('encrypt.key'))",
+            write = "pgp_sym_encrypt(?, current_setting('encrypt.key'))"
+    )
     private String number;
 
     public String getMaskedNumber() {
+        if (number == null) {
+            throw new MissingCardNumberException("Missing card number");
+        }
         return "**** **** ****" + number.substring(number.length() - 4);
     }
 
@@ -42,7 +51,7 @@ public class Card {
 
     public String getFormattedExpiryDate() {
         if (expiryDate == null) {
-            throw new MissingExpiryDateException("No expiry date");
+            throw new MissingExpiryDateException("Missing expiry date");
         }
         return expiryDate.format(DateTimeFormatter.ofPattern("MM/yy"));
     }
@@ -72,6 +81,6 @@ public class Card {
     }
 
     @JoinColumn(name = "user_id")
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     private User user;
 }
