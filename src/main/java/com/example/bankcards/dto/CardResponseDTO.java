@@ -15,4 +15,5 @@ public class CardResponseDTO {
     private LocalDate expiryDate;
     private CardStatus status;
     private double balance;
+    private boolean isBlockRequested;
 }

@@ -1,6 +1,6 @@
 package com.example.bankcards.entity;
 
-import com.example.bankcards.util.ExpireDateConverter;
+import com.example.bankcards.util.ExpiryDateConverter;
 import com.example.bankcards.util.NumberMasker;
 import jakarta.persistence.*;
 import lombok.*;
@@ -43,10 +43,10 @@ public class Card {
     private double balance;
 
     @Column(nullable = false)
-    private LocalDate expireDate;
+    private LocalDate expiryDate;
 
     public String getFormattedExpiryDate() {
-        return ExpireDateConverter.convertDateToString(this.expireDate);
+        return ExpiryDateConverter.convertDateToString(this.expiryDate);
     }
 
     public void blockCard() {
@@ -58,7 +58,7 @@ public class Card {
     }
 
     public boolean updateExpireStatus() {
-        if (this.expireDate != null && this.expireDate.isBefore(LocalDate.now())) {
+        if (this.expiryDate != null && this.expiryDate.isBefore(LocalDate.now())) {
             this.status = CardStatus.EXPIRED;
             return true;
         }
@@ -76,4 +76,7 @@ public class Card {
     @JoinColumn(name = "user_id")
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     private User user;
+
+    @Column(nullable = false)
+    private boolean isBlockRequested;
 }

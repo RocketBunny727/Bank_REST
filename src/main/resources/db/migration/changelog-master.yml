@@ -81,6 +81,11 @@ databaseChangeLog:
                   nullable: false
                   foreignKey: fk_cards_user
                   references: users(id)
+            - column:
+                name: is_block_requested
+                type: bool
+                constraints:
+                  nullable: false
       - createIndex:
           indexName: idx_cards_user
           tableName: cards

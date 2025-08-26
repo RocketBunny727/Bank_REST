@@ -7,7 +7,7 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
-public class ExpireDateConverter {
+public class ExpiryDateConverter {
     public static String convertDateToString(LocalDate expireDate) {
         if (expireDate == null) {
             throw new MissingExpiryDateException("Missing expiry date");
@@ -23,7 +23,7 @@ public class ExpireDateConverter {
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/yy");
             YearMonth yearMonth = YearMonth.parse(date, formatter);
-            return yearMonth.atEndOfMonth();
+            return yearMonth.atDay(1);
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Invalid date format, expected MM/yy: " + date, e);
         }
