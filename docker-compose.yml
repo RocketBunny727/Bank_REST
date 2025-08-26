@@ -3,9 +3,9 @@ services:
   postgres:
     image: postgres:15
     environment:
-      POSTGRES_DB: bankdb
+      POSTGRES_DB: bank_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 471979
+      POSTGRES_PASSWORD: 123456
     ports:
       - "5432:5432"
     volumes:
@@ -17,10 +17,10 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankdb
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bank_db
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: 471979
-      ENCRYPT_KEY: "NO?DATA"
+      SPRING_DATASOURCE_PASSWORD: 123456
+      ENCRYPT_KEY: "encryptkey"
     depends_on:
       - postgres
 volumes:
