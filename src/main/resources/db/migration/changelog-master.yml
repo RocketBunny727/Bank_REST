@@ -29,6 +29,16 @@ databaseChangeLog:
                type: varchar(15)
                constraints:
                  nullable: false
+            - column:
+                name: name
+                type: varchar(255)
+                constraints:
+                  nullable: false
+            - column:
+                name: surname
+                type: varchar(255)
+                constraints:
+                  nullable: false
       - createIndex:
           indexName: idx_users_username
           tableName: users
@@ -83,9 +93,10 @@ databaseChangeLog:
                   references: users(id)
             - column:
                 name: is_block_requested
-                type: bool
+                type: boolean
                 constraints:
                   nullable: false
+                defaultValueBoolean: false
       - createIndex:
           indexName: idx_cards_user
           tableName: cards

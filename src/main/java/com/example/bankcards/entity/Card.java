@@ -54,27 +54,41 @@ public class Card {
     }
 
     public void unblockCard() {
-        this.status = CardStatus.ACTIVE;
+        if (this.expiryDate != null && !this.expiryDate.isBefore(LocalDate.now())) {
+            this.status = CardStatus.ACTIVE;
+        }
     }
 
-    public boolean updateExpireStatus() {
+    @PrePersist
+    @PreUpdate
+    public void updateExpireStatus() {
         if (this.expiryDate != null && this.expiryDate.isBefore(LocalDate.now())) {
             this.status = CardStatus.EXPIRED;
-            return true;
         }
-        return false;
     }
 
     public boolean canTransact() {
         return this.status == CardStatus.ACTIVE;
     }
 
-    public double makeTransaction(double amount) {
-        return this.balance += amount;
+    public boolean withdraw(double amount) {
+        if (!canTransact() || amount <= 0 || this.balance < amount) {
+            return false;
+        }
+        this.balance -= amount;
+        return true;
+    }
+
+    public boolean deposit(double amount) {
+        if (!canTransact() || amount <= 0) {
+            return false;
+        }
+        this.balance += amount;
+        return true;
     }
 
     @JoinColumn(name = "user_id")
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private User user;
 
     @Column(nullable = false)

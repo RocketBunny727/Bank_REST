@@ -8,10 +8,10 @@ import lombok.Data;
 @Data
 @Builder
 public class TransactionDTO {
-    @NotNull(message = "From card ID is required")
+    @NotNull(message = "Source card ID is required")
     private Long fromCardId;
 
-    @NotNull(message = "To card ID is required")
+    @NotNull(message = "Destination card ID is required")
     private Long toCardId;
 
     @Positive(message = "Amount must be positive")

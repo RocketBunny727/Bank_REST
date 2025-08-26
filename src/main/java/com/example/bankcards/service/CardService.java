@@ -17,6 +17,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.Objects;
+
 @Service
 @RequiredArgsConstructor
 public class CardService {
@@ -28,13 +31,19 @@ public class CardService {
     public CardResponseDTO createCard(CardCreateDTO dto) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) userService.loadUserByUsername(auth.getName());
-        if (!currentUser.getRole().equals(Role.ADMIN) && !(dto.getUser().getId() == currentUser.getId())) {
-            throw new AccessDeniedException("Cannot create card for another user");
+        if (!currentUser.getRole().equals(Role.ADMIN)) {
+            throw new AccessDeniedException("Only ADMIN can create cards");
+        }
+        if (dto.getCardNumber().length() != 19 || !dto.getCardNumber().matches("\\d+")) {
+            throw new IllegalArgumentException("Card number must be 16 digits");
+        }
+        if (dto.getExpiryDate().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Expiry date cannot be in the past");
         }
 
         Card card = Card.builder()
                 .number(dto.getCardNumber())
-                .owner(dto.getOwner())
+                .owner(dto.getUser().getName() + dto.getUser().getSurname())
                 .expiryDate(dto.getExpiryDate())
                 .status(dto.getStatus())
                 .balance(dto.getBalance())
@@ -77,12 +86,13 @@ public class CardService {
                 .orElseThrow(() -> new CardNotFoundException("Card with id '" + id + "' not found"));
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) userService.loadUserByUsername(auth.getName());
-        if (currentUser.getRole().equals(Role.ADMIN) && card.getStatus().equals(CardStatus.ACTIVE)) {
-            card.setStatus(CardStatus.BLOCKED);
-        } else if (currentUser.getRole().equals(Role.USER) && card.getUser().getId() == currentUser.getId()) {
+        if (currentUser.getRole().equals(Role.ADMIN)) {
+            card.blockCard();
+            card.setBlockRequested(false);
+        } else if (currentUser.getRole().equals(Role.USER) && Objects.equals(card.getUser().getId(), currentUser.getId())) {
             card.setBlockRequested(true);
-        } else {
-            throw new AccessDeniedException("Cannot block card for another user");
+        }else {
+            throw new AccessDeniedException("Cannot request block card for another user");
         }
 
         return toResponseDTO(cardRepository.save(card));
@@ -94,11 +104,14 @@ public class CardService {
                 .orElseThrow(() -> new CardNotFoundException("Card with id '" + id + "' not found"));
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) userService.loadUserByUsername(auth.getName());
-        if (currentUser.getRole().equals(Role.ADMIN) && card.getStatus().equals(CardStatus.BLOCKED)) {
-            card.setStatus(CardStatus.ACTIVE);
-        } else {
+        if (!currentUser.getRole().equals(Role.ADMIN)) {
             throw new AccessDeniedException("Only ADMIN can unblock cards");
         }
+        if (card.getStatus() == CardStatus.EXPIRED) {
+            throw new IllegalStateException("Cannot activate expired card");
+        }
+        card.unblockCard();
+        card.setBlockRequested(false);
 
         return toResponseDTO(cardRepository.save(card));
     }
@@ -121,6 +134,7 @@ public class CardService {
     private CardResponseDTO toResponseDTO(Card card) {
         return CardResponseDTO.builder()
                 .id(card.getId())
+                .maskedNumber(card.getMaskedNumber())
                 .balance(card.getBalance())
                 .expiryDate(card.getExpiryDate())
                 .status(card.getStatus())

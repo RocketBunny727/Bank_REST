@@ -21,9 +21,6 @@ public class CardCreateDTO {
     @NotNull(message = "Expiry date is required")
     private LocalDate expiryDate;
 
-    @NotBlank(message = "Owner name is required")
-    private String owner;
-
     @NotNull(message = "Status is required")
     private CardStatus status;
 

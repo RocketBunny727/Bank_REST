@@ -12,4 +12,10 @@ public class UserCreateDTO {
 
     @NotBlank(message = "Password is required")
     private String password;
+
+    @NotBlank(message = "Name is requaired")
+    private String name;
+
+    @NotBlank(message = "Surname is requaired")
+    private String surname;
 }
