@@ -8,6 +8,7 @@ import com.example.bankcards.entity.Role;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.exception.AccessDeniedException;
 import com.example.bankcards.exception.CardNotFoundException;
+import com.example.bankcards.repository.CardSpecification;
 import com.example.bankcards.repository.ICardRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -64,19 +65,55 @@ public class CardService {
     }
 
     @Transactional
-    public Page<CardResponseDTO> getCards(Pageable pageable, String status) {
+    public Page<CardResponseDTO> getAllCards(Pageable pageable) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) userService.loadUserByUsername(auth.getName());
-        Page<Card> cards;
+        Page<Card> cards = null;
         if (currentUser.getRole().equals(Role.ADMIN)) {
-                cards = cardRepository.findAll(pageable);
-        } else {
-            if (status != null && !status.isEmpty()) {
-                cards = cardRepository.findByUserIdAndStatus(currentUser.getId(), CardStatus.valueOf(status), pageable);
-            } else {
-                cards = cardRepository.findByUserId(currentUser.getId(), pageable);
-            }
+            cards = cardRepository.findAll(pageable);
+        } else if (currentUser.getRole().equals(Role.USER)) {
+            cards = cardRepository.findByUserId(currentUser.getId(), pageable);
         }
+
+        if (cards.isEmpty()) {
+            throw new CardNotFoundException("Cards not found");
+        }
+
+        return cards.map(this::toResponseDTO);
+    }
+
+    @Transactional
+    public Page<CardResponseDTO> getFilteredCards(
+            Pageable pageable,
+            Long userId,
+            String number,
+            CardStatus status,
+            String owner,
+            Double balance,
+            LocalDate expiryDate,
+            boolean isBlockRequired,
+            Double minBalance,
+            Double maxBalance,
+            LocalDate expiryDateFrom,
+            LocalDate expiryDateTo
+            ) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) userService.loadUserByUsername(auth.getName());
+
+        if (minBalance != null && maxBalance != null && minBalance > maxBalance) {
+            throw new IllegalArgumentException("minBalance cannot be greater than maxBalance");
+        }
+        if (expiryDateFrom != null && expiryDateTo != null && expiryDateFrom.isAfter(expiryDateTo)) {
+            throw new IllegalArgumentException("expiryDateFrom cannot be greater than expiryDateTo");
+        }
+
+        Long currentUserId = currentUser.getRole().equals(Role.ADMIN) ? null : currentUser.getId();
+        Page<Card> cards = cardRepository.findAll(
+                CardSpecification.withFilter(currentUserId, number, status, owner, balance, expiryDate, isBlockRequired,
+                        minBalance, maxBalance, expiryDateFrom, expiryDateTo),
+                pageable
+        );
+
         return cards.map(this::toResponseDTO);
     }
 

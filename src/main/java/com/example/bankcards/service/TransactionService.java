@@ -29,10 +29,10 @@ public class TransactionService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) userService.loadUserByUsername(auth.getName());
 
-        Card sourceCard = cardRepository.findById(dto.getFromCardId())
-                .orElseThrow(() -> new CardNotFoundException("Source card with id: '" + dto.getFromCardId() + "' not found"));
-        Card destinationCard = cardRepository.findById(dto.getToCardId())
-                .orElseThrow(() -> new CardNotFoundException("Destination card with id: '" + dto.getToCardId() + "' not found"));
+        Card sourceCard = cardRepository.findByCardNumber(dto.getSourceCardNumber())
+                .orElseThrow(() -> new CardNotFoundException("Source card with number: '" + dto.getSourceCardNumber() + "' not found"));
+        Card destinationCard = cardRepository.findByCardNumber(dto.getDestinationCardNumber())
+                .orElseThrow(() -> new CardNotFoundException("Destination card with id: '" + dto.getDestinationCardNumber() + "' not found"));
 
         if (!Objects.equals(sourceCard.getUser().getId(), currentUser.getId()) ||
                 !Objects.equals(destinationCard.getUser().getId(), currentUser.getId())) {
