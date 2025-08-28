@@ -11,6 +11,16 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(MissingCardNumberException.class)
+    public ResponseEntity<String> handleMissingCardNumberException(MissingCardNumberException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MissingExpiryDateException.class)
+    public ResponseEntity<String> handleMissingExpiryDateException(MissingExpiryDateException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(CardNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleCardNotFoundException(CardNotFoundException ex) {
         Map<String, String> error = new HashMap<>();
@@ -27,6 +37,41 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, String>> handleAccessDeniedException(AccessDeniedException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(CardExpiredException.class)
+    public ResponseEntity<Map<String, String>> handleCardExpiredException(CardExpiredException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(CardBlockedException.class)
+    public ResponseEntity<Map<String, String>> handleCardBlockedException(CardBlockedException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(InsufficientFundsException.class)
+    public ResponseEntity<Map<String, String>> handleInsufficientFundsException(InsufficientFundsException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(CardAlredyExistsException.class)
+    public ResponseEntity<Map<String, String>> handleCardAlredyExistsException(CardAlredyExistsException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(UsernameAlredyExistsException.class)
+    public ResponseEntity<Map<String, String>> handleUsernameAlredyExistsException(UsernameAlredyExistsException ex) {
         Map<String, String> error = new HashMap<>();
         error.put("error", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);

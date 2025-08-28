@@ -1,5 +1,8 @@
 package com.example.bankcards.entity;
 
+import com.example.bankcards.exception.CardBlockedException;
+import com.example.bankcards.exception.CardExpiredException;
+import com.example.bankcards.exception.InsufficientFundsException;
 import com.example.bankcards.util.ExpiryDateConverter;
 import com.example.bankcards.util.NumberMasker;
 import jakarta.persistence.*;
@@ -67,24 +70,28 @@ public class Card {
         }
     }
 
-    public boolean canTransact() {
-        return this.status == CardStatus.ACTIVE;
-    }
-
-    public boolean withdraw(double amount) {
-        if (!canTransact() || amount <= 0 || this.balance < amount) {
-            return false;
+    public void withdraw(double amount) {
+        if (amount <= 0 || this.balance < amount) {
+            throw new InsufficientFundsException("Insufficient funds on source card");
         }
+
+        if (this.status == CardStatus.EXPIRED) {
+            throw new CardExpiredException("Source card has expired");
+        } else if (this.status == CardStatus.BLOCKED) {
+            throw new CardBlockedException("Source card is blocked");
+        }
+
         this.balance -= amount;
-        return true;
     }
 
-    public boolean deposit(double amount) {
-        if (!canTransact() || amount <= 0) {
-            return false;
+    public void deposit(double amount) {
+        if (this.status == CardStatus.EXPIRED) {
+            throw new CardExpiredException("Destination card has expired");
+        } else if (this.status == CardStatus.BLOCKED) {
+            throw new CardBlockedException("Destination card is blocked");
         }
+
         this.balance += amount;
-        return true;
     }
 
     @JoinColumn(name = "user_id")
