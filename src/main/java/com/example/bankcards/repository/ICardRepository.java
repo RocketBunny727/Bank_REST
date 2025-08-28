@@ -13,5 +13,5 @@ import java.util.Optional;
 @Repository
 public interface ICardRepository extends JpaRepository<Card, Long>, JpaSpecificationExecutor<Card> {
     Page<Card> findByUserId(Long userId, Pageable pageable);
-    Optional<Card> findByCardNumber(String cardNumber);
+    Optional<Card> findByNumber(String cardNumber);
 }

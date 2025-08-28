@@ -36,7 +36,7 @@ public class Card {
     @Enumerated(EnumType.STRING)
     private CardStatus status;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "numeric(15, 2)")
     private String owner;
 
     @Column(nullable = false)

@@ -40,7 +40,7 @@ public class CardSpecification {
             }
 
             if (owner != null) {
-                predicates.add(criteriaBuilder.equal(root.get("owner").get("id"), owner));
+                predicates.add(criteriaBuilder.equal(root.get("owner"), owner));
             }
 
             if (balance != null) {

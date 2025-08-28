@@ -19,14 +19,12 @@ public class CardCreateDTO {
     private String cardNumber;
 
     @NotNull(message = "Expiry date is required")
-    private LocalDate expiryDate;
-
-    @NotNull(message = "Status is required")
-    private CardStatus status;
-
-    @PositiveOrZero(message = "Balance must be non-negative")
-    private double balance;
+    @Pattern(regexp = "\\d{2}/\\d{2}", message = "Invalid expiry date format")
+    private String expiryDate;
 
     @NotNull(message = "User is required")
-    private User user;
+    private Long userId;
+
+    @Pattern(regexp = "\\d.\\d{2}", message = "Invalid balance")
+    private Double balance;
 }

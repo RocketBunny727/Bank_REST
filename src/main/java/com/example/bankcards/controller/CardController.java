@@ -59,7 +59,7 @@ public class CardController {
             @ApiResponse(responseCode = "403", description = "Access denied"),
             @ApiResponse(responseCode = "404", description = "Cards not found")
     })
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<Page<CardResponseDTO>> findAllCards(
             @PageableDefault(size = 10, sort = "id") Pageable pageable,
             @RequestParam(required = false) String status){

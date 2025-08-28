@@ -10,6 +10,7 @@ import com.example.bankcards.exception.AccessDeniedException;
 import com.example.bankcards.exception.CardNotFoundException;
 import com.example.bankcards.repository.CardSpecification;
 import com.example.bankcards.repository.ICardRepository;
+import com.example.bankcards.util.ExpiryDateConverter;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,24 +32,31 @@ public class CardService {
     @Transactional
     public CardResponseDTO createCard(CardCreateDTO dto) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) userService.loadUserByUsername(auth.getName());
+        User currentUser = userService.getUserByUsername(auth.getName());
         if (!currentUser.getRole().equals(Role.ADMIN)) {
             throw new AccessDeniedException("Only ADMIN can create cards");
         }
-        if (dto.getCardNumber().length() != 19 || !dto.getCardNumber().matches("\\d+")) {
+        if (dto.getCardNumber().length() != 19 || !dto.getCardNumber().matches("\\d{4} \\d{4} \\d{4} \\d{4}")) {
             throw new IllegalArgumentException("Card number must be 16 digits");
         }
-        if (dto.getExpiryDate().isBefore(LocalDate.now())) {
+
+        LocalDate expiryDate = ExpiryDateConverter.convertStringToDate(dto.getExpiryDate());
+        if (expiryDate.isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("Expiry date cannot be in the past");
         }
 
+        if (dto.getBalance() == null) {
+            dto.setBalance(Double.valueOf(0.0));
+        }
+
+        User cardUser = userService.getUserById(dto.getUserId());
         Card card = Card.builder()
                 .number(dto.getCardNumber())
-                .owner(dto.getUser().getName() + dto.getUser().getSurname())
-                .expiryDate(dto.getExpiryDate())
-                .status(dto.getStatus())
+                .owner(cardUser.getName() + " " + cardUser.getSurname())
+                .expiryDate(expiryDate)
+                .status(CardStatus.ACTIVE)
                 .balance(dto.getBalance())
-                .user(dto.getUser())
+                .user(cardUser)
                 .isBlockRequested(false)
                 .build();
         card = cardRepository.save(card);
@@ -67,7 +75,7 @@ public class CardService {
     @Transactional
     public Page<CardResponseDTO> getAllCards(Pageable pageable) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) userService.loadUserByUsername(auth.getName());
+        User currentUser = userService.getUserByUsername(auth.getName());
         Page<Card> cards = null;
         if (currentUser.getRole().equals(Role.ADMIN)) {
             cards = cardRepository.findAll(pageable);
@@ -98,7 +106,7 @@ public class CardService {
             LocalDate expiryDateTo
             ) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) userService.loadUserByUsername(auth.getName());
+        User currentUser = userService.getUserByUsername(auth.getName());
 
         if (minBalance != null && maxBalance != null && minBalance > maxBalance) {
             throw new IllegalArgumentException("minBalance cannot be greater than maxBalance");
@@ -122,7 +130,7 @@ public class CardService {
         Card card = cardRepository.findById(id)
                 .orElseThrow(() -> new CardNotFoundException("Card with id '" + id + "' not found"));
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) userService.loadUserByUsername(auth.getName());
+        User currentUser = userService.getUserByUsername(auth.getName());
         if (currentUser.getRole().equals(Role.ADMIN)) {
             card.blockCard();
             card.setBlockRequested(false);
@@ -140,7 +148,7 @@ public class CardService {
         Card card = cardRepository.findById(id)
                 .orElseThrow(() -> new CardNotFoundException("Card with id '" + id + "' not found"));
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) userService.loadUserByUsername(auth.getName());
+        User currentUser = userService.getUserByUsername(auth.getName());
         if (!currentUser.getRole().equals(Role.ADMIN)) {
             throw new AccessDeniedException("Only ADMIN can unblock cards");
         }
@@ -158,7 +166,7 @@ public class CardService {
         Card card = cardRepository.findById(id)
                 .orElseThrow(() -> new CardNotFoundException("Card with id '" + id + "' not found"));
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) userService.loadUserByUsername(auth.getName());
+        User currentUser = userService.getUserByUsername(auth.getName());
         if (!currentUser.getRole().equals(Role.ADMIN)) {
             throw new AccessDeniedException("Only ADMIN can delete cards");
         }
@@ -173,7 +181,7 @@ public class CardService {
                 .id(card.getId())
                 .maskedNumber(card.getMaskedNumber())
                 .balance(card.getBalance())
-                .expiryDate(card.getExpiryDate())
+                .expiryDate(ExpiryDateConverter.convertDateToString(card.getExpiryDate()))
                 .status(card.getStatus())
                 .owner(card.getOwner())
                 .isBlockRequested(card.isBlockRequested())
@@ -182,8 +190,8 @@ public class CardService {
 
     private void checkCardAccess(Card card) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) userService.loadUserByUsername(auth.getName());
-        if (!currentUser.getRole().equals(Role.ADMIN) && !(card.getUser().getId() == currentUser.getId())) {
+        User currentUser = userService.getUserByUsername(auth.getName());
+        if (!currentUser.getRole().equals(Role.ADMIN) && !Objects.equals(card.getUser().getId(), currentUser.getId())) {
             throw new AccessDeniedException("Access denied to this card");
         }
     }

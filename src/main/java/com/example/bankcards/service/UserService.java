@@ -8,12 +8,14 @@ import com.example.bankcards.exception.UserNotFoundException;
 import com.example.bankcards.repository.IUserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.Optional;
 
 @Service
@@ -32,6 +34,8 @@ public class UserService implements UserDetailsService {
                 .username(dto.getUsername())
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .role(Role.USER)
+                .name(dto.getName())
+                .surname(dto.getSurname())
                 .build();
 
         user = userRepository.save(user);
@@ -40,29 +44,25 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public UserResponseDTO getUserById(Long id) {
-        User user = userRepository.findById(id)
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User with id '" + id + "' not found"));
-        return toResponseDTO(user);
     }
 
     @Transactional
-    public UserResponseDTO getUserByUsername(String username) {
-        User user = userRepository.findByUsername(username)
+    public User getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException("User with username: '" + username + "' not found"));
-        return toResponseDTO(user);
     }
 
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Optional<User> user = userRepository.findByUsername(username);
-        if (user.isEmpty()) {
-            throw new UsernameNotFoundException("User with username: '" + username + "' not found");
-        }
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User with username: '" + username + "' not found"));
         return org.springframework.security.core.userdetails.User
-                .withUsername(user.get().getUsername())
-                .password(user.get().getPassword())
-                .roles(user.get().getRole().name())
+                .withUsername(user.getUsername())
+                .password(user.getPassword())
+                .authorities(Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name())))
                 .build();
     }
 
@@ -70,6 +70,9 @@ public class UserService implements UserDetailsService {
         return UserResponseDTO.builder()
                 .id(user.getId())
                 .username(user.getUsername())
+                .name(user.getName())
+                .surname(user.getSurname())
+                .role(user.getRole())
                 .build();
     }
 }

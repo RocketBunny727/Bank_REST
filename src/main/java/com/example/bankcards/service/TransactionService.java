@@ -22,16 +22,15 @@ public class TransactionService {
 
     private final ICardRepository cardRepository;
     private final UserService userService;
-    private final CardService cardService;
 
     @Transactional
     public TransactionResponseDTO transfer(TransactionDTO dto) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) userService.loadUserByUsername(auth.getName());
+        User currentUser = userService.getUserByUsername(auth.getName());
 
-        Card sourceCard = cardRepository.findByCardNumber(dto.getSourceCardNumber())
+        Card sourceCard = cardRepository.findByNumber(dto.getSourceCardNumber())
                 .orElseThrow(() -> new CardNotFoundException("Source card with number: '" + dto.getSourceCardNumber() + "' not found"));
-        Card destinationCard = cardRepository.findByCardNumber(dto.getDestinationCardNumber())
+        Card destinationCard = cardRepository.findByNumber(dto.getDestinationCardNumber())
                 .orElseThrow(() -> new CardNotFoundException("Destination card with id: '" + dto.getDestinationCardNumber() + "' not found"));
 
         if (!Objects.equals(sourceCard.getUser().getId(), currentUser.getId()) ||

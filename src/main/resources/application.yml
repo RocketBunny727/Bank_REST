@@ -1,15 +1,20 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/bank_db
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/bank_db}
     username: postgres
-    password: 123456
+    password: 471979
   jpa:
     hibernate:
       ddl-auto: none
   liquibase:
     change-log: classpath:/db/migration/changelog-master.yml
-  jwt:
-    secret: supersecret
-    expiration: 3600
-  encrypt:
-    key: supersecret
+jwt:
+  secret: ${JWT_SECRET:QEIZXTVAsW2+gw630r+0syqB3csEEUk/fdBY624U51eIpWXAXGenivNJCtPFNlpbMCDO+vPDlJ3X/TrFTH+Msg}
+  expiration: ${JWT_EXPIRATION:3600000}
+encrypt:
+  key: ${ENCRYPT_KEY:wWvhTBPCjgYyAxWZj2SPTvXqw8eu2S37oss0ESyNAIUPeNW1K9gLMwzyJhXrzNip3Ilh00A4bq8TZcciHFzodQ}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

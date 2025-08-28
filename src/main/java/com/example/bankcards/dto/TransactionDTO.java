@@ -1,6 +1,7 @@
 package com.example.bankcards.dto;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import lombok.Builder;
 import lombok.Data;
@@ -15,5 +16,6 @@ public class TransactionDTO {
     private String destinationCardNumber;
 
     @Positive(message = "Amount must be positive")
+    @Pattern(regexp = "\\d.\\d{2}", message = "Invalid amount")
     private double amount;
 }
