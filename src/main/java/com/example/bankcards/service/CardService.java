@@ -33,6 +33,10 @@ public class CardService {
 
     @Transactional
     public CardResponseDTO createCard(CardCreateDTO dto) {
+        if (dto.getUserId() == null) {
+            logger.error("User id is required");
+            throw new UserNotFoundException("User id is required");
+        }
         logger.info("Attempting to create card for userId={}", dto.getUserId());
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = userService.getUserByUsername(auth.getName());
@@ -50,7 +54,7 @@ public class CardService {
         }
         if(cardRepository.findByNumber(dto.getCardNumber()).isPresent()) {
             logger.error("Card number already exists");
-            throw new CardAlredyExistsException("Card number already exists");
+            throw new CardAlreadyExistsException("Card number already exists");
         }
         if (dto.getExpiryDate() == null) {
             logger.error("Expiry date is null");
@@ -74,7 +78,7 @@ public class CardService {
                 .owner(cardUser.getName() + " " + cardUser.getSurname())
                 .expiryDate(expiryDate)
                 .status(CardStatus.ACTIVE)
-                .balance(dto.getBalance())
+                .balance(Double.parseDouble(String.format("%.2f", dto.getBalance())))
                 .user(cardUser)
                 .isBlockRequested(false)
                 .build();
@@ -111,7 +115,7 @@ public class CardService {
             cards = cardRepository.findByUserId(currentUser.getId(), pageable);
         }
 
-        if (cards.isEmpty()) {
+        if (cards.getContent().isEmpty()) {
             logger.warn("No cards found for user={}", currentUser.getUsername());
             throw new CardNotFoundException("Cards not found");
         }
@@ -155,6 +159,11 @@ public class CardService {
                         minBalance, maxBalance, expiryDateFrom, expiryDateTo),
                 pageable
         );
+
+        if(cards.getContent().isEmpty()) {
+            logger.warn("No cards found with filters for user={}", currentUser.getUsername());
+            throw new CardNotFoundException("Cards not found");
+        }
 
         logger.info("Successfully retrieved {} filtered cards", cards.getTotalElements());
         return cards.map(this::toResponseDTO);
@@ -238,7 +247,7 @@ public class CardService {
         return CardResponseDTO.builder()
                 .id(card.getId())
                 .maskedNumber(card.getMaskedNumber())
-                .balance(card.getBalance())
+                .balance(Double.parseDouble(String.format("%.2f", card.getBalance())))
                 .expiryDate(ExpiryDateConverter.convertDateToString(card.getExpiryDate()))
                 .status(card.getStatus())
                 .owner(card.getOwner())

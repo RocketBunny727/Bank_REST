@@ -5,8 +5,9 @@ import com.example.bankcards.dto.UserResponseDTO;
 import com.example.bankcards.entity.Role;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.exception.AccessDeniedException;
+import com.example.bankcards.exception.DataNotFilledException;
 import com.example.bankcards.exception.UserNotFoundException;
-import com.example.bankcards.exception.UsernameAlredyExistsException;
+import com.example.bankcards.exception.UsernameAlreadyExistsException;
 import com.example.bankcards.repository.IUserRepository;
 import com.example.bankcards.repository.UserSpecifications;
 import jakarta.transaction.Transactional;
@@ -38,9 +39,18 @@ public class UserService implements UserDetailsService {
     @Transactional
     public UserResponseDTO createUser(UserCreateDTO dto) {
         logger.info("Attempting to create user: username={}", dto.getUsername());
+
+        if (dto.getUsername() == null || dto.getUsername().isEmpty()
+                || dto.getPassword() == null || dto.getPassword().isEmpty()
+                || dto.getName() == null || dto.getName().isEmpty()
+                || dto.getSurname() == null || dto.getSurname().isEmpty()) {
+            logger.error("Signup fields are missing");
+            throw new DataNotFilledException("Not all fields are filled in");
+        }
+
         if (userRepository.findByUsername(dto.getUsername()).isPresent()) {
             logger.error("Username already exists: username={}", dto.getUsername());
-            throw new UsernameAlredyExistsException("Username already exists");
+            throw new UsernameAlreadyExistsException("Username already exists");
         }
 
         User user = User.builder()

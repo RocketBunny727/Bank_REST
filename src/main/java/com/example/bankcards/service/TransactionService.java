@@ -5,7 +5,7 @@ import com.example.bankcards.dto.TransactionResponseDTO;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.exception.AccessDeniedException;
-import com.example.bankcards.exception.CardNotFoundException;
+import com.example.bankcards.exception.InvalidTransactionException;
 import com.example.bankcards.repository.ICardRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -37,12 +37,12 @@ public class TransactionService {
         Card sourceCard = cardRepository.findByNumber(dto.getSourceCardNumber())
                 .orElseThrow(() -> {
                     logger.error("Source card not found: cardNumber={}", dto.getSourceCardNumber());
-                    return new CardNotFoundException("Source card with number: '" + dto.getSourceCardNumber() + "' not found");
+                    return new InvalidTransactionException("Source card with number: '" + dto.getSourceCardNumber() + "' not found");
                 });
         Card destinationCard = cardRepository.findByNumber(dto.getDestinationCardNumber())
                 .orElseThrow(() -> {
                     logger.error("Destination card not found: cardNumber={}", dto.getDestinationCardNumber());
-                    return new CardNotFoundException("Destination card with number: '" + dto.getDestinationCardNumber() + "' not found");
+                    return new InvalidTransactionException("Destination card with number: '" + dto.getDestinationCardNumber() + "' not found");
                 });
 
         if (!Objects.equals(sourceCard.getUser().getId(), currentUser.getId()) ||
@@ -50,6 +50,11 @@ public class TransactionService {
             logger.error("Access denied: userId={} cannot transfer between cards sourceId={} and destinationId={}",
                     currentUser.getId(), sourceCard.getId(), destinationCard.getId());
             throw new AccessDeniedException("Cannot transfer between cards of another user");
+        }
+
+        if (dto.getAmount() <= 0) {
+            logger.error("Amount must be positive");
+            throw new InvalidTransactionException("Amount must be positive");
         }
 
         sourceCard.withdraw(dto.getAmount());
@@ -71,8 +76,8 @@ public class TransactionService {
                 .destinationId(destinationCard.getId())
                 .maskedSourceCardNumber(sourceCard.getMaskedNumber())
                 .maskedDestinationCardNumber(destinationCard.getMaskedNumber())
-                .sourceBalance(sourceCard.getBalance())
-                .destinationBalance(destinationCard.getBalance())
+                .sourceBalance(Double.parseDouble(String.format("%.2f", sourceCard.getBalance())))
+                .destinationBalance(Double.parseDouble(String.format("%.2f", destinationCard.getBalance())))
                 .owner(sourceCard.getOwner())
                 .build();
     }

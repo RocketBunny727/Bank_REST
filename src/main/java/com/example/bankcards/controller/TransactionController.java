@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -31,7 +32,7 @@ public class TransactionController {
             @ApiResponse(responseCode = "404", description = "Card for transaction not found")
     })
     @PutMapping
-    public ResponseEntity<TransactionResponseDTO> makeTransaction(@RequestBody TransactionDTO transactionDTO) {
+    public ResponseEntity<TransactionResponseDTO> makeTransaction(@Valid @RequestBody TransactionDTO transactionDTO) {
         return ResponseEntity.ok(transactionService.transfer(transactionDTO));
     }
 }

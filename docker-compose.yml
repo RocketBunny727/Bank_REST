@@ -10,10 +10,19 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
+      start_period: 10s
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   app:
     build:
       context: .
@@ -24,15 +33,29 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bank_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: 123456
-      ENCRYPT_KEY: "SRngtywq9aSoiXkAogQShPMgW94V+ZxsGp7hJUG73E1IOkkfN3GPCIyrXunaFHYrOCnXSON4E1EXJI2GjSR73w"
+      ENCRYPT_KEY: "wWvhTBPCjgYyAxWZj2SPTvXqw8eu2S37oss0ESyNAIUPeNW1K9gLMwzyJhXrzNip3Ilh00A4bq8TZcciHFzodQ"
+      JWT_SECRET: "QEIZXTVAsW2+gw630r+0syqB3csEEUk/fdBY624U51eIpWXAXGenivNJCtPFNlpbMCDO+vPDlJ3X/TrFTH+Msg"
+      JWT_EXPIRATION: 3600
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  app-network:
+    driver: bridge
+
 volumes:
   postgres_data:

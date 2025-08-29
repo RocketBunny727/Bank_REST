@@ -1,13 +1,15 @@
 package com.example.bankcards.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
 @Data
 @Builder
+@AllArgsConstructor
 public class TransactionDTO {
     @NotNull(message = "Source card ID is required")
     private String sourceCardNumber;
@@ -16,6 +18,6 @@ public class TransactionDTO {
     private String destinationCardNumber;
 
     @Positive(message = "Amount must be positive")
-    @Pattern(regexp = "\\d.\\d{2}", message = "Invalid amount")
-    private double amount;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
+    private Double amount;
 }

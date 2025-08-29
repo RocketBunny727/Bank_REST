@@ -1,15 +1,14 @@
 package com.example.bankcards.dto;
 
 import com.example.bankcards.entity.CardStatus;
-import com.example.bankcards.entity.User;
-import jakarta.validation.constraints.Pattern;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
-import java.time.LocalDate;
-
 @Data
 @Builder
+@AllArgsConstructor
 public class CardResponseDTO {
     private Long id;
     private String maskedNumber;
@@ -17,8 +16,8 @@ public class CardResponseDTO {
     private String expiryDate;
     private CardStatus status;
 
-    @Pattern(regexp = "\\d.\\d{2}")
-    private double balance;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
+    private Double balance;
 
     private boolean isBlockRequested;
 }
