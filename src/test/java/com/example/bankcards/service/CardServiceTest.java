@@ -61,7 +61,7 @@ public class CardServiceTest {
                 .owner("John Doe")
                 .expiryDate(LocalDate.of(2026, 12, 1))
                 .status(CardStatus.ACTIVE)
-                .balance(100.0)
+                .balance(100.00)
                 .user(regularUser)
                 .isBlockRequested(false)
                 .build();
@@ -81,7 +81,7 @@ public class CardServiceTest {
         CardCreateDTO dto = CardCreateDTO.builder()
                 .cardNumber("1111 1111 1111 1111")
                 .expiryDate("12/26")
-                .balance(100.0)
+                .balance(100.00)
                 .userId(2L)
                 .build();
 
@@ -100,7 +100,7 @@ public class CardServiceTest {
         CardCreateDTO dto = CardCreateDTO.builder()
                 .cardNumber("1111 1111 1111 1111")
                 .expiryDate("12/26")
-                .balance(100.0)
+                .balance(100.00)
                 .userId(2L)
                 .build();
 
@@ -182,7 +182,7 @@ public class CardServiceTest {
                 .owner("John Doe")
                 .expiryDate(LocalDate.of(2026, 12, 31))
                 .status(CardStatus.ACTIVE)
-                .balance(100.0)
+                .balance(100.00)
                 .user(regularUser)
                 .isBlockRequested(true)
                 .build();
@@ -215,7 +215,7 @@ public class CardServiceTest {
                 .owner("Jane Smith")
                 .expiryDate(LocalDate.of(2026, 12, 31))
                 .status(CardStatus.ACTIVE)
-                .balance(200.0)
+                .balance(200.00)
                 .user(otherUser)
                 .isBlockRequested(false)
                 .build();

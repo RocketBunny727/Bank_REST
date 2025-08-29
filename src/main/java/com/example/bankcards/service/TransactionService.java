@@ -15,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.Locale;
 import java.util.Objects;
 
 @Service
@@ -76,8 +77,8 @@ public class TransactionService {
                 .destinationId(destinationCard.getId())
                 .maskedSourceCardNumber(sourceCard.getMaskedNumber())
                 .maskedDestinationCardNumber(destinationCard.getMaskedNumber())
-                .sourceBalance(Double.parseDouble(String.format("%.2f", sourceCard.getBalance())))
-                .destinationBalance(Double.parseDouble(String.format("%.2f", destinationCard.getBalance())))
+                .sourceBalance(Double.parseDouble(String.format(Locale.US, "%.2f", sourceCard.getBalance())))
+                .destinationBalance(Double.parseDouble(String.format(Locale.US, "%.2f", destinationCard.getBalance())))
                 .owner(sourceCard.getOwner())
                 .build();
     }

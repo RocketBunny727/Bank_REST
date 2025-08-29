@@ -10,6 +10,7 @@ import lombok.*;
 import org.hibernate.annotations.ColumnTransformer;
 
 import java.time.LocalDate;
+import java.util.Locale;
 
 @Entity
 @Table(name = "cards")
@@ -81,7 +82,7 @@ public class Card {
             throw new CardBlockedException("Source card is blocked");
         }
 
-        this.balance -= amount;
+        this.balance -= Double.parseDouble(String.format(Locale.US, "%.2f", amount));
     }
 
     public void deposit(double amount) {
@@ -91,7 +92,7 @@ public class Card {
             throw new CardBlockedException("Destination card is blocked");
         }
 
-        this.balance += amount;
+        this.balance += Double.parseDouble(String.format(Locale.US, "%.2f", amount));
     }
 
     @JoinColumn(name = "user_id")

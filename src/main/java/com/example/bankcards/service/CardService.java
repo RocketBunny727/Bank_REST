@@ -21,6 +21,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Locale;
 import java.util.Objects;
 
 @Service
@@ -78,7 +79,7 @@ public class CardService {
                 .owner(cardUser.getName() + " " + cardUser.getSurname())
                 .expiryDate(expiryDate)
                 .status(CardStatus.ACTIVE)
-                .balance(Double.parseDouble(String.format("%.2f", dto.getBalance())))
+                .balance(Double.parseDouble(String.format(Locale.US, "%.2f", dto.getBalance())))
                 .user(cardUser)
                 .isBlockRequested(false)
                 .build();
@@ -247,7 +248,7 @@ public class CardService {
         return CardResponseDTO.builder()
                 .id(card.getId())
                 .maskedNumber(card.getMaskedNumber())
-                .balance(Double.parseDouble(String.format("%.2f", card.getBalance())))
+                .balance(Double.parseDouble(String.format(Locale.US, "%.2f", card.getBalance())))
                 .expiryDate(ExpiryDateConverter.convertDateToString(card.getExpiryDate()))
                 .status(card.getStatus())
                 .owner(card.getOwner())
