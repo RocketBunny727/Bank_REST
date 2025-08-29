@@ -1,1 +1,837 @@
-# Здесь будет OpenAPI описание всех доступных эндпоинтов и моделей данных.
+openapi: 3.0.3
+info:
+  title: Bank Cards API
+  description: API for managing users, cards, and transactions in a banking system
+  version: '1.0.0'
+servers:
+  - url: http://localhost:8080
+    description: Local server
+security:
+  - bearerAuth: []
+paths:
+  /api/auth/signup:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: Creates a new user with the provided details. Accessible to all users.
+      operationId: signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateDTO'
+      responses:
+        '200':
+          description: User successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponseDTO'
+        '400':
+          description: Missing or invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Username already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Authenticate a user
+      description: Authenticates a user and returns a JWT token. Accessible to all users.
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginDTO'
+      responses:
+        '200':
+          description: Successful authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponseDTO'
+        '400':
+          description: Missing or invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/cards:
+    post:
+      tags:
+        - Card Management
+      summary: Create a new card
+      description: Creates a new card for a user. Requires ADMIN role.
+      operationId: createCard
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CardCreateDTO'
+      responses:
+        '200':
+          description: Card successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponseDTO'
+        '400':
+          description: Invalid card number, expiry date, or other fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied (non-ADMIN user)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags:
+        - Card Management
+      summary: Filter cards
+      description: Retrieves a paginated list of cards based on filters. Accessible to ADMIN (all cards) or USER (own cards).
+      operationId: filterCards
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (0-based)
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: userId
+          in: query
+          description: Filter by user ID (ADMIN only)
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: number
+          in: query
+          description: Filter by card number
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by card status
+          required: false
+          schema:
+            $ref: '#/components/schemas/CardStatus'
+        - name: owner
+          in: query
+          description: Filter by card owner name
+          required: false
+          schema:
+            type: string
+        - name: balance
+          in: query
+          description: Filter by exact balance
+          required: false
+          schema:
+            type: number
+            format: double
+        - name: expiryDate
+          in: query
+          description: Filter by exact expiry date (format MM/YY)
+          required: false
+          schema:
+            type: string
+        - name: isBlockRequired
+          in: query
+          description: Filter by block request status
+          required: false
+          schema:
+            type: boolean
+        - name: minBalance
+          in: query
+          description: Filter by minimum balance
+          required: false
+          schema:
+            type: number
+            format: double
+        - name: maxBalance
+          in: query
+          description: Filter by maximum balance
+          required: false
+          schema:
+            type: number
+            format: double
+        - name: expiryDateFrom
+          in: query
+          description: Filter by expiry date from (format YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: expiryDateTo
+          in: query
+          description: Filter by expiry date to (format YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Successfully retrieved filtered cards
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CardResponseDTO'
+                  pageable:
+                    $ref: '#/components/schemas/Pageable'
+                  totalElements:
+                    type: integer
+                    format: int64
+                  totalPages:
+                    type: integer
+                    format: int32
+        '400':
+          description: Invalid filter parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No cards found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/cards/all:
+    get:
+      tags:
+        - Card Management
+      summary: Get all cards
+      description: Retrieves a paginated list of all cards (ADMIN) or user's own cards (USER).
+      operationId: getAllCards
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (0-based)
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Successfully retrieved cards
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CardResponseDTO'
+                  pageable:
+                    $ref: '#/components/schemas/Pageable'
+                  totalElements:
+                    type: integer
+                    format: int64
+                  totalPages:
+                    type: integer
+                    format: int32
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No cards found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/cards/{id}:
+    get:
+      tags:
+        - Card Management
+      summary: Get card by ID
+      description: Retrieves details of a specific card. Accessible to ADMIN or the card's owner.
+      operationId: getCardById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of the card
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Card successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponseDTO'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - Card Management
+      summary: Delete a card
+      description: Deletes a card by ID. Requires ADMIN role and zero balance.
+      operationId: deleteCard
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of the card
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Card successfully deleted
+        '400':
+          description: Cannot delete card with positive balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied (non-ADMIN user)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/cards/{id}/block:
+    put:
+      tags:
+        - Card Management
+      summary: Request or perform card blocking
+      description: Requests card blocking (USER) or blocks a card (ADMIN).
+      operationId: blockCard
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of the card
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Card block requested or performed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponseDTO'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/cards/{id}/unblock:
+    put:
+      tags:
+        - Card Management
+      summary: Unblock a card
+      description: Unblocks a card. Requires ADMIN role.
+      operationId: unblockCard
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of the card
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Card successfully unblocked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardResponseDTO'
+        '400':
+          description: Cannot unblock expired card
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied (non-ADMIN user)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/transact:
+    put:
+      tags:
+        - Transaction management
+      summary: Perform a transaction
+      description: Transfers funds between two cards owned by the same user.
+      operationId: transfer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionDTO'
+      responses:
+        '200':
+          description: Transaction successfully completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDTO'
+        '400':
+          description: Invalid transaction data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied or insufficient funds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Source or destination card not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/users/{id}:
+    get:
+      tags:
+        - User viewing
+      summary: Get user by ID
+      description: Retrieves details of a specific user. Requires ADMIN role.
+      operationId: getUserById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of the user
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: User successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponseDTO'
+        '403':
+          description: Access denied (non-ADMIN user)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/users:
+    get:
+      tags:
+        - User viewing
+      summary: Filter users
+      description: Retrieves a paginated list of users based on filters. Requires ADMIN role.
+      operationId: filterUsers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (0-based)
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: id
+          in: query
+          description: Filter by user ID
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: username
+          in: query
+          description: Filter by username
+          required: false
+          schema:
+            type: string
+        - name: name
+          in: query
+          description: Filter by first name
+          required: false
+          schema:
+            type: string
+        - name: surname
+          in: query
+          description: Filter by surname
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved filtered users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserResponseDTO'
+                  pageable:
+                    $ref: '#/components/schemas/Pageable'
+                  totalElements:
+                    type: integer
+                    format: int64
+                  totalPages:
+                    type: integer
+                    format: int32
+        '403':
+          description: Access denied (non-ADMIN user)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UserCreateDTO:
+      type: object
+      required:
+        - username
+        - password
+        - name
+        - surname
+      properties:
+        username:
+          type: string
+          description: Unique username of the user
+          example: testuser
+        password:
+          type: string
+          description: User password
+          example: password123
+        name:
+          type: string
+          description: First name of the user
+          example: John
+        surname:
+          type: string
+          description: Last name of the user
+          example: Doe
+    LoginDTO:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: Username of the user
+          example: testuser
+        password:
+          type: string
+          description: User password
+          example: password123
+    UserResponseDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique ID of the user
+          example: 1
+        username:
+          type: string
+          description: Username of the user
+          example: testuser
+        name:
+          type: string
+          description: First name of the user
+          example: John
+        surname:
+          type: string
+          description: Last name of the user
+          example: Doe
+        role:
+          $ref: '#/components/schemas/Role'
+    LoginResponseDTO:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT token for authentication
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    CardCreateDTO:
+      type: object
+      required:
+        - cardNumber
+        - expiryDate
+        - userId
+      properties:
+        cardNumber:
+          type: string
+          description: Card number (16 digits, space-separated)
+          example: 1234 5678 1234 5678
+        expiryDate:
+          type: string
+          description: Expiry date of the card (MM/YY)
+          example: 12/27
+        userId:
+          type: integer
+          format: int64
+          description: ID of the user owning the card
+          example: 1
+        balance:
+          type: number
+          format: double
+          description: Initial balance of the card
+          example: 1000.0
+    CardResponseDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique ID of the card
+          example: 1
+        maskedNumber:
+          type: string
+          description: Masked card number
+          example: '**** **** **** 5678'
+        balance:
+          type: number
+          format: double
+          description: Current balance of the card
+          example: 1000.0
+        expiryDate:
+          type: string
+          description: Expiry date of the card (MM/YY)
+          example: 12/27
+        status:
+          $ref: '#/components/schemas/CardStatus'
+        owner:
+          type: string
+          description: Name of the card owner
+          example: John Doe
+        isBlockRequested:
+          type: boolean
+          description: Indicates if a block request is pending
+          example: false
+    TransactionDTO:
+      type: object
+      required:
+        - sourceCardNumber
+        - destinationCardNumber
+        - amount
+      properties:
+        sourceCardNumber:
+          type: string
+          description: Source card number (16 digits, space-separated)
+          example: 1234 5678 1234 5678
+        destinationCardNumber:
+          type: string
+          description: Destination card number (16 digits, space-separated)
+          example: 9876 5432 1234 5678
+        amount:
+          type: number
+          format: double
+          description: Amount to transfer
+          example: 500.0
+    TransactionResponseDTO:
+      type: object
+      properties:
+        sourceId:
+          type: integer
+          format: int64
+          description: ID of the source card
+          example: 1
+        destinationId:
+          type: integer
+          format: int64
+          description: ID of the destination card
+          example: 2
+        maskedSourceCardNumber:
+          type: string
+          description: Masked source card number
+          example: '**** **** **** 5678'
+        maskedDestinationCardNumber:
+          type: string
+          description: Masked destination card number
+          example: '**** **** **** 5678'
+        sourceBalance:
+          type: number
+          format: double
+          description: Balance of the source card after transaction
+          example: 500.0
+        destinationBalance:
+          type: number
+          format: double
+          description: Balance of the destination card after transaction
+          example: 1500.0
+        owner:
+          type: string
+          description: Name of the card owner
+          example: John Doe
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: Invalid card number
+    Role:
+      type: string
+      enum:
+        - USER
+        - ADMIN
+      description: User role
+    CardStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - BLOCKED
+        - EXPIRED
+      description: Status of the card
+    Pageable:
+      type: object
+      properties:
+        pageNumber:
+          type: integer
+          description: Page number
+          example: 0
+        pageSize:
+          type: integer
+          description: Number of items per page
+          example: 10
+        sort:
+          type: object
+          properties:
+            sorted:
+              type: boolean
+              description: Indicates if the result is sorted
+              example: false
+            unsorted:
+              type: boolean
+              description: Indicates if the result is unsorted
+              example: true
+            empty:
+              type: boolean
+              description: Indicates if the sort is empty
+              example: true

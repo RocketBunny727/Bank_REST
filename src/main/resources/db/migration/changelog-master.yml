@@ -1,0 +1,128 @@
+databaseChangeLog:
+  - changeSet:
+      id: V001_create_users_table
+      author: RocketBunny
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_users
+              - column:
+                  name: username
+                  type: varchar(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: password
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: varchar(15)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: surname
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_users_username
+            tableName: users
+            columns:
+              - column:
+                  name: username
+  - changeSet:
+      id: V002_create_cards_table
+      author: RocketBunny
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS pgcrypto;
+        - createTable:
+            tableName: cards
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_cards
+              - column:
+                  name: number
+                  type: bytea
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: status
+                  type: varchar(15)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: balance
+                  type: numeric(15,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expiry_date
+                  type: date
+              - column:
+                  name: owner
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_cards_user
+                    references: users(id)
+              - column:
+                  name: is_block_requested
+                  type: boolean
+                  constraints:
+                    nullable: false
+                  defaultValueBoolean: false
+        - createIndex:
+            indexName: idx_cards_user
+            tableName: cards
+            columns:
+              - column:
+                  name: user_id
+  - changeSet:
+      id: V003_insert_admin
+      author: RocketBunny
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: Admin
+              - column:
+                  name: password
+                  value: $2a$10$zHrngcqFgBpOKJ8a6h.D2OlDRX8v3tNq9svop6Y4Z6bhLeDNdpd5W
+              - column:
+                  name: role
+                  value: ADMIN
+              - column:
+                  name: name
+                  value: Admin
+              - column:
+                  name: surname
+                  value: Admin
